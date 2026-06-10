@@ -6,7 +6,8 @@ from datetime import datetime
 from db.queries import (
     get_categories,
     get_services,
-    create_daily_log
+    create_daily_log,
+    save_attachment
 )
 
 # -----------------------------------
@@ -102,6 +103,7 @@ outcome = st.text_area(
 remark = st.text_area(
     "Remark"
 )
+log_id = create_daily_log
 
 uploaded_file = st.file_uploader(
     "Attach File",
@@ -114,7 +116,34 @@ uploaded_file = st.file_uploader(
     ]
 )
 
+if uploaded_file:
 
+    upload_folder = "uploads"
+
+    os.makedirs(
+        upload_folder,
+        exist_ok=True
+    )
+
+    file_path = os.path.join(
+        upload_folder,
+        uploaded_file.name
+    )
+
+    with open(
+        file_path,
+        "wb"
+    ) as f:
+
+        f.write(
+            uploaded_file.getbuffer()
+        )
+
+    save_attachment(
+        st.session_state["user_id"],
+        uploaded_file.name,
+        file_path
+    )
 
 
 # -----------------------------------

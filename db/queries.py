@@ -465,8 +465,9 @@ def create_daily_log(
         status):
 
     conn = get_connection()
-
     cursor = conn.cursor()
+
+    log_id_var = cursor.var(int)
 
     cursor.execute("""
         INSERT INTO daily_logs(
@@ -485,6 +486,7 @@ def create_daily_log(
         VALUES(
             :1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11
         )
+        RETURNING log_id INTO :12
     """, [
         user_id,
         log_date,
@@ -496,10 +498,13 @@ def create_daily_log(
         duration_minutes,
         outcome,
         remark,
-        status
+        status,
+        log_id_var
     ])
 
     conn.commit()
+
+    log_id = log_id_var.getvalue()[0]
 
     cursor.close()
     conn.close()
@@ -509,6 +514,9 @@ def create_daily_log(
         "CREATE_LOG",
         f"Created {status} daily log"
     )
+
+    return log_id
+
 def create_user(
         employee_code,
         full_name,
@@ -998,3 +1006,25 @@ def save_attachment(
 
     cursor.close()
     conn.close()
+
+def get_attachments(log_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            attachment_id,
+            file_name,
+            file_path,
+            uploaded_at
+        FROM log_attachments
+        WHERE log_id = :1
+    """, [log_id])
+
+    rows = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return rows

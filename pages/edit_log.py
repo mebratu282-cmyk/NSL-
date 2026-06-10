@@ -3,7 +3,8 @@ import streamlit as st
 from db.queries import (
     get_log_by_id,
     update_daily_log,
-    get_approval_comments
+    get_approval_comments,
+    get_attachments
 )
 
 if "edit_log_id" not in st.session_state:
@@ -77,3 +78,17 @@ if approval:
     st.info(
         approval[1]
     )
+
+attachments = get_attachments(log_id)
+
+if attachments:
+
+    st.subheader(
+        "Attachments"
+    )
+
+    for attachment in attachments:
+
+        st.write(
+            attachment[1]
+        )
