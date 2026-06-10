@@ -122,7 +122,6 @@ def create_audit_log(
 
     cursor.close()
     conn.close()
-
 def get_dashboard_counts(user_id):
 
     conn = get_connection()
@@ -553,7 +552,53 @@ def create_user(
         "CREATE_USER",
         f"Created user {employee_code}"
     )
+def get_users():
 
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            user_id,
+            employee_code,
+            full_name,
+            role,
+            department,
+            is_active
+        FROM users
+        ORDER BY full_name
+    """)
+
+    rows = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return rows
+
+def get_user(user_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            user_id,
+            employee_code,
+            full_name,
+            role,
+            department,
+            is_active
+        FROM users
+        WHERE user_id = :1
+    """, [user_id])
+
+    row = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return row
 def get_log_by_id(log_id):
 
     conn = get_connection()
@@ -695,6 +740,7 @@ def get_log_statistics(user_id):
 
 def get_monthly_summary(month, year):
 
+
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -717,3 +763,238 @@ def get_monthly_summary(month, year):
     conn.close()
 
     return rows
+
+def get_supervisor_dashboard():
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            (SELECT COUNT(*)
+             FROM daily_logs
+             WHERE status='SUBMITTED'),
+
+            (SELECT COUNT(*)
+             FROM daily_logs
+             WHERE status='APPROVED'),
+
+            (SELECT COUNT(*)
+             FROM daily_logs
+             WHERE status='REJECTED'),
+
+            (SELECT COUNT(*)
+             FROM users
+             WHERE role='EMPLOYEE')
+        FROM dual
+    """)
+
+    row = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return row
+
+def get_top_employees():
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            u.full_name,
+            COUNT(*) total_logs
+        FROM daily_logs d
+        JOIN users u
+            ON d.user_id = u.user_id
+        GROUP BY u.full_name
+        ORDER BY total_logs DESC
+        FETCH FIRST 10 ROWS ONLY
+    """)
+
+    rows = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return rows
+
+def get_status_summary():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            status,
+            COUNT(*)
+        FROM daily_logs
+        GROUP BY status
+    """)
+
+    rows = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return rows
+
+def change_password(
+        
+        user_id,
+        new_password_hash):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE users
+        SET password_hash = :1
+        WHERE user_id = :2
+    """, [
+        new_password_hash,
+        user_id
+    ])
+
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    create_audit_log(
+        user_id,
+        "CHANGE_PASSWORD",
+        "User changed password"
+    )
+
+def get_password_hash(user_id):
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT password_hash
+        FROM users
+        WHERE user_id = :1
+    """, [user_id])
+
+    row = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return row[0]
+def get_user_profile(user_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            employee_code,
+            full_name,
+            role,
+            department,
+            is_active,
+            created_at,
+            last_login,
+            phone
+        FROM users
+        WHERE user_id = :1
+    """, [user_id])
+
+    row = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return row
+def update_last_login(user_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE users
+        SET last_login = SYSDATE
+        WHERE user_id = :1
+    """, [user_id])
+
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+def get_login_history(user_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            action_date,
+            details
+        FROM audit_logs
+        WHERE user_id = :1
+        AND action_type = 'LOGIN'
+        ORDER BY action_date DESC
+    """, [user_id])
+
+    rows = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return rows
+
+def get_audit_logs():
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            a.action_date,
+            u.full_name,
+            a.action_type,
+            a.details
+        FROM audit_logs a
+        JOIN users u
+            ON a.user_id = u.user_id
+        ORDER BY a.action_date DESC
+    """)
+
+    rows = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return rows
+
+def save_attachment(
+        log_id,
+        file_name,
+        file_path):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO log_attachments(
+            log_id,
+            file_name,
+            file_path
+        )
+        VALUES(
+            :1,:2,:3
+        )
+    """, [
+        log_id,
+        file_name,
+        file_path
+    ])
+
+    conn.commit()
+
+    cursor.close()
+    conn.close()

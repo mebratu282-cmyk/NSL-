@@ -133,7 +133,12 @@ WHERE employee_code = 'SUP001';
 ALTER TABLE daily_logs
 ADD activity_location VARCHAR2(300);
 
+ALTER TABLE daily_logs
+ADD duration_minutes NUMBER;
 
+ALTER TABLE users
+ADD last_login DATE;
+COMMIT;
 
 
 COMMIT;

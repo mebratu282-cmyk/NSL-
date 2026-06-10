@@ -1,5 +1,5 @@
 import streamlit as st
-
+import os
 from datetime import date
 from datetime import datetime
 
@@ -102,6 +102,20 @@ outcome = st.text_area(
 remark = st.text_area(
     "Remark"
 )
+
+uploaded_file = st.file_uploader(
+    "Attach File",
+    type=[
+        "pdf",
+        "png",
+        "jpg",
+        "jpeg",
+        "docx"
+    ]
+)
+
+
+
 
 # -----------------------------------
 # Buttons

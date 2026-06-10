@@ -1,10 +1,19 @@
 import streamlit as st
 import pandas as pd
-
+if st.session_state["role"] in [
+    "ADMIN",
+    "SUPERVISOR"
+]:
+    st.page_link(
+        "pages/supervisor_dashboard.py",
+        label="Supervisor Dashboard"
+    )
+    
 from db.queries import (
     get_dashboard_counts,
     get_recent_logs,
-    get_log_statistics
+    get_log_statistics,
+    update_last_login
 )
 
 if "user_id" not in st.session_state:
@@ -31,6 +40,17 @@ if st.sidebar.button("Logout"):
 
     st.switch_page("app.py")
 
+st.page_link(
+    "pages/profile.py",
+    label="My Profile"
+)
+update_last_login(
+    st.session_state["user_id"]
+)
+st.page_link(
+    "pages/change_password.py",
+    label="Change Password"
+)
 counts = get_dashboard_counts(
     st.session_state["user_id"]
 )
