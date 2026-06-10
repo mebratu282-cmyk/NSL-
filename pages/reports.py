@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import date
 import io
-
+from utils.pdf_generator import generate_daily_report_pdf   
 from db.queries import (
     get_daily_report,
     get_employee_performance
@@ -74,8 +74,6 @@ with tab2:
         use_container_width=True
     )
 
-
-
 output = io.BytesIO()
 
 with pd.ExcelWriter(
@@ -94,3 +92,18 @@ st.download_button(
     file_name="daily_report.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
+
+
+pdf_file = generate_daily_report_pdf(
+    rows,
+    "daily_report.pdf"
+)
+
+with open(pdf_file, "rb") as f:
+
+    st.download_button(
+        "Download PDF Report",
+        f,
+        file_name="daily_report.pdf",
+        mime="application/pdf"
+    )

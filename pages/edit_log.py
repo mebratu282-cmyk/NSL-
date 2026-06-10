@@ -19,20 +19,6 @@ if log is None:
     st.stop()
 
 
-st.write("Session Log ID =", st.session_state.get("edit_log_id"))
-
-
-log_id = st.session_state["edit_log_id"]
-
-st.write("Log ID =", log_id)
-
-log = get_log_by_id(log_id)
-
-st.write("Database Result =", log)
-
-
-
-
 
 if log[10] not in ["DRAFT", "REJECTED"]:
 

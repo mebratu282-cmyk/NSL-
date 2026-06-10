@@ -3,7 +3,8 @@ import pandas as pd
 
 from db.queries import (
     get_dashboard_counts,
-    get_recent_logs
+    get_recent_logs,
+    get_log_statistics
 )
 
 if "user_id" not in st.session_state:
@@ -84,3 +85,25 @@ st.dataframe(
     df,
     use_container_width=True
 )
+
+stats = get_log_statistics(
+    st.session_state["user_id"]
+)
+
+if stats:
+
+    chart_df = pd.DataFrame(
+        stats,
+        columns=[
+            "Status",
+            "Count"
+        ]
+    )
+
+    st.subheader(
+        "Activity Status Summary"
+    )
+
+    st.bar_chart(
+        chart_df.set_index("Status")
+    )

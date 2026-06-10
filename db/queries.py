@@ -408,22 +408,43 @@ def get_employee_performance():
     conn.close()
 
     return rows
-def get_users():
+def get_user_logs(
+        user_id,
+        status=None):
 
     conn = get_connection()
+
     cursor = conn.cursor()
 
-    cursor.execute("""
+    sql = """
         SELECT
-            user_id,
-            employee_code,
-            full_name,
-            role,
-            department,
-            is_active
-        FROM users
-        ORDER BY full_name
-    """)
+            d.log_id,
+            d.log_date,
+            s.service_name,
+            d.activity_location,
+            d.status
+        FROM daily_logs d
+        JOIN services s
+            ON d.service_id = s.service_id
+        WHERE d.user_id = :1
+    """
+
+    params = [user_id]
+
+    if status and status != "ALL":
+
+        sql += """
+            AND d.status = :2
+        """
+
+        params.append(status)
+
+    sql += """
+        ORDER BY d.log_date DESC,
+                 d.log_id DESC
+    """
+
+    cursor.execute(sql, params)
 
     rows = cursor.fetchall()
 
@@ -630,7 +651,7 @@ def delete_daily_log(
         f"Deleted log ID {log_id}"
     )
 def get_approval_comments(log_id):
-
+    
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -650,3 +671,49 @@ def get_approval_comments(log_id):
     conn.close()
 
     return row
+
+def get_log_statistics(user_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            status,
+            COUNT(*)
+        FROM daily_logs
+        WHERE user_id = :1
+        GROUP BY status
+    """, [user_id])
+
+    rows = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return rows
+
+def get_monthly_summary(month, year):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            u.full_name,
+            COUNT(*) total_logs
+        FROM daily_logs d
+        JOIN users u
+            ON d.user_id = u.user_id
+        WHERE EXTRACT(MONTH FROM d.log_date)=:1
+        AND EXTRACT(YEAR FROM d.log_date)=:2
+        GROUP BY u.full_name
+        ORDER BY total_logs DESC
+    """, [month, year])
+
+    rows = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return rows

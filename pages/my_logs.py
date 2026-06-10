@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-
+from datetime import date
 from db.queries import get_user_logs, delete_daily_log
 
 if "user_id" not in st.session_state:
@@ -9,8 +9,33 @@ if "user_id" not in st.session_state:
 
 st.title("My Daily Logs")
 
+status_filter = st.selectbox(
+    "Filter By Status",
+    [
+        "ALL",
+        "DRAFT",
+        "SUBMITTED",
+        "APPROVED",
+        "REJECTED"
+    ]
+)
+start_date = st.date_input(
+    "From Date",
+    value=date.today().replace(day=1)
+)
+
+end_date = st.date_input(
+    "To Date",
+    value=date.today()
+)
+search_text = st.text_input(
+    "Search Service"
+)
+
+
 rows = get_user_logs(
-    st.session_state["user_id"]
+    st.session_state["user_id"],
+    status_filter
 )
 
 if rows:
@@ -37,10 +62,8 @@ selected_log = st.selectbox(
     "Select Log",
     [row[0] for row in rows]
 )
-delete_daily_log(
-    selected_log,
-    st.session_state["user_id"]
-)
+
+
 
 col1, col2 = st.columns(2)
 
