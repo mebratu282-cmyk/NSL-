@@ -3,8 +3,6 @@ import streamlit as st
 from db.connection import get_connection
 from utils.security import hash_password, verify_password
 
-
-
 def authenticate_user(employee_code, password):
 
     connection = get_connection()
@@ -49,8 +47,6 @@ def authenticate_user(employee_code, password):
         )
 
     return None
-
-
 
 def get_categories():
 
@@ -190,8 +186,6 @@ def get_log_statistics(user_id):
     conn.close()
 
     return rows
-
-
 def get_recent_logs(user_id):
 
     conn = get_connection()
@@ -218,7 +212,6 @@ def get_recent_logs(user_id):
 
     return rows
 
-
 def get_submitted_logs():
 
     conn = get_connection()
@@ -231,6 +224,7 @@ def get_submitted_logs():
             s.service_name,
             d.log_date,
             d.activity_description,
+            d.activity_location,
             d.status
         FROM daily_logs d
         JOIN users u
@@ -346,6 +340,7 @@ def get_daily_report(report_date):
             u.full_name,
             c.category_name,
             s.service_name,
+            d.activity_location,
             d.activity_description,
             d.status
         FROM daily_logs d
@@ -365,7 +360,32 @@ def get_daily_report(report_date):
     conn.close()
 
     return rows
+def get_user_logs(user_id):
 
+    conn = get_connection()
+
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            d.log_id,
+            d.log_date,
+            s.service_name,
+            d.activity_location,
+            d.status
+        FROM daily_logs d
+        JOIN services s
+            ON d.service_id = s.service_id
+        WHERE d.user_id = :1
+        ORDER BY d.log_date DESC
+    """, [user_id])
+
+    rows = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return rows
 def get_employee_performance():
 
     conn = get_connection()
@@ -512,3 +532,121 @@ def create_user(
         "CREATE_USER",
         f"Created user {employee_code}"
     )
+
+def get_log_by_id(log_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            log_id,
+            log_date,
+            service_id,
+            activity_location,
+            activity_description,
+            start_time,
+            end_time,
+            duration_minutes,
+            outcome,
+            remark,
+            status
+        FROM daily_logs
+        WHERE log_id = :1
+    """, [log_id])
+
+    row = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return row    
+
+def update_daily_log(
+        
+        log_id,
+        service_id,
+        activity_location,
+        activity_description,
+        start_time,
+        end_time,
+        duration_minutes,
+        outcome,
+        remark):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE daily_logs
+        SET
+            service_id = :1,
+            activity_location = :2,
+            activity_description = :3,
+            start_time = :4,
+            end_time = :5,
+            duration_minutes = :6,
+            outcome = :7,
+            remark = :8
+        WHERE log_id = :9
+    """, [
+        service_id,
+        activity_location,
+        activity_description,
+        start_time,
+        end_time,
+        duration_minutes,
+        outcome,
+        remark,
+        log_id
+    ])
+
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+def delete_daily_log(
+        
+        log_id,
+        user_id):
+
+    conn = get_connection()
+
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        DELETE FROM daily_logs
+        WHERE log_id = :1
+    """, [log_id])
+
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    create_audit_log(
+        user_id,
+        "DELETE_LOG",
+        f"Deleted log ID {log_id}"
+    )
+def get_approval_comments(log_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            approval_status,
+            comments,
+            approval_date
+        FROM approvals
+        WHERE log_id = :1
+        ORDER BY approval_id DESC
+    """, [log_id])
+
+    row = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return row

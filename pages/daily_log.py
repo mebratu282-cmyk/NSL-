@@ -62,15 +62,14 @@ selected_service = st.selectbox(
 # Activity Description
 # -----------------------------------
 
-activity_description = st.text_area(
-    "Activity Description"
-)
-
 
 activity_location = st.text_input(
     "Activity Location"
 )
 
+activity_description = st.text_area(
+    "Activity Description"
+)
 
 # -----------------------------------
 # Start Time
@@ -123,15 +122,31 @@ with col1:
             log_date,
             end_time
         )
+        if end_datetime <= start_datetime:
+            st.error("End time must be greater than start time")
+            st.stop()
+
+        duration_minutes = int(
+            (end_datetime - start_datetime).total_seconds() / 60
+        )
+
+        if not activity_location:
+            st.error("Please enter activity location")
+            st.stop()
+
+        if not activity_description:
+            st.error("Please enter activity description")
+            st.stop()
 
         create_daily_log(
             st.session_state["user_id"],
-            selected_service[0],
             log_date,
-            activity_description,
+            selected_service[0],
             activity_location,
+            activity_description,
             start_datetime,
             end_datetime,
+            duration_minutes,
             outcome,
             remark,
             "DRAFT"
@@ -153,18 +168,34 @@ with col2:
             log_date,
             end_time
         )
+        if end_datetime <= start_datetime:
+            st.error("End time must be greater than start time")
+            st.stop()
+        duration_minutes = int(
+            (end_datetime - start_datetime).total_seconds() / 60
+        )
+        if not activity_location:
+            st.error("Please enter activity location")
+            st.stop()
+
+        if not activity_description:
+            st.error("Please enter activity description")
+            st.stop()
+
+
 
         create_daily_log(
             st.session_state["user_id"],
-            selected_service[0],
             log_date,
-            activity_description,
+            selected_service[0],
             activity_location,
+            activity_description,
             start_datetime,
             end_datetime,
+            duration_minutes,
             outcome,
             remark,
             "SUBMITTED"
-        )
+)
 
         st.success("Log Submitted Successfully")

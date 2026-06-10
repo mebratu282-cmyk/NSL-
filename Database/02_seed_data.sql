@@ -130,10 +130,11 @@ WHERE employee_code = 'SUP001';
 
 
 
-
+ALTER TABLE daily_logs
+ADD activity_location VARCHAR2(300);
 
 
 
 
 COMMIT;
-SELECT * FROM USERS
+SELECT * FROM USERS;

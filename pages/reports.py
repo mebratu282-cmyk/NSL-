@@ -42,6 +42,7 @@ with tab1:
             "Employee",
             "Category",
             "Service",
+            "Activity Location",
             "Activity",
             "Status"
         ]

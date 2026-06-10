@@ -16,6 +16,20 @@ st.write(
     f"Welcome, {st.session_state['full_name']}"
 )
 
+st.sidebar.success(
+    f"Logged in as\n{st.session_state['full_name']}"
+)
+
+st.sidebar.write(
+    f"Role: {st.session_state['role']}"
+)
+
+if st.sidebar.button("Logout"):
+
+    st.session_state.clear()
+
+    st.switch_page("app.py")
+
 counts = get_dashboard_counts(
     st.session_state["user_id"]
 )
